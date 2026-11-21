@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brainrot Battle 3D - model viewer</title>
+<style>html,body{margin:0;background:#140433;color:#fff;font:14px system-ui;overflow:hidden}canvas{display:block}#ui{position:fixed;left:8px;top:8px;display:flex;gap:6px;flex-wrap:wrap}button{font:inherit;padding:6px 10px;border-radius:8px;border:2px solid #000;background:#b6ff2e}</style>
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script></head><body><div id="ui"></div>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from './vendor/GLTFLoader.js';
+import { DRACOLoader } from './vendor/DRACOLoader.js';
+import { OutlineEffect } from './vendor/OutlineEffect.js';
+const q=new URLSearchParams(location.search), ID=q.get('m')||'shark';
+const r=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});r.setPixelRatio(Math.min(devicePixelRatio,2));r.setSize(innerWidth,innerHeight);r.outputColorSpace=THREE.SRGBColorSpace;r.shadowMap.enabled=true;document.body.appendChild(r.domElement);
+const sc=new THREE.Scene();sc.background=new THREE.Color(q.get('bg')||'#2a0c5c');
+const cam=new THREE.PerspectiveCamera(28,innerWidth/innerHeight,.1,100);
+sc.add(new THREE.HemisphereLight('#c9a0ff','#2a0b4a',1.6));const sun=new THREE.DirectionalLight('#fff',2.2);sun.position.set(2,5,4);sun.castShadow=true;sc.add(sun);
+const fl=new THREE.Mesh(new THREE.CircleGeometry(2,48),new THREE.MeshLambertMaterial({color:'#3a1478'}));fl.rotation.x=-Math.PI/2;fl.receiveShadow=true;sc.add(fl);
+const fx=new OutlineEffect(r,{defaultThickness:.005,defaultColor:[.04,0,.08]});
+const g=new Uint8Array([70,70,70,255,160,160,160,255,255,255,255,255]);const gt=new THREE.DataTexture(g,3,1);gt.minFilter=gt.magFilter=THREE.NearestFilter;gt.needsUpdate=true;
+const dl=new DRACOLoader();dl.setDecoderPath('vendor/draco/');const ld=new GLTFLoader();ld.setDRACOLoader(dl);
+let mixer,model,acts={};
+ld.load('models/'+ID+'.glb',gl=>{model=gl.scene;model.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.frustumCulled=false;const conv=s=>{const n=(s.name||'').toLowerCase(),m=new THREE.MeshToonMaterial({color:s.color.clone(),gradientMap:gt});if(n==='brain'&&o.geometry.attributes.color)m.vertexColors=true;if(n==='gold')m.emissive=new THREE.Color('#5a3a00');if(n==='slime'){m.emissive=new THREE.Color('#3fbf00');m.emissiveIntensity=.55}
+ m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <dithering_fragment>','float rf=pow(1.0-clamp(dot(normalize(normal),normalize(vViewPosition)),0.0,1.0),2.6);gl_FragColor.rgb+=vec3(1.0,0.36,0.94)*smoothstep(.35,.75,rf)*.45;\n#include <dithering_fragment>')};return m};o.material=Array.isArray(o.material)?o.material.map(conv):conv(o.material)});
+ const b=new THREE.Box3().setFromObject(model),h=b.max.y-b.min.y;sc.add(model);cam.position.set(0,h*.55,h*3.1);cam.lookAt(0,h*.48,0);window.H=h;
+ mixer=new THREE.AnimationMixer(model);for(const c of gl.animations)acts[c.name]=mixer.clipAction(c);
+ const ui=document.getElementById('ui');for(const n of Object.keys(acts)){const bt=document.createElement('button');bt.textContent=n;bt.onclick=()=>play(n);ui.appendChild(bt)}
+ if(q.has('noui'))ui.style.display='none';play(q.get('a')||'idle');window.ready=true});
+function play(n){for(const a of Object.values(acts))a.stop();acts[n].play();window.cur=n}
+window.pose=(n,t,yaw)=>{for(const a of Object.values(acts))a.stop();const a=acts[n];a.play();a.paused=true;a.time=t;mixer.update(0);model.rotation.y=yaw||0;fx.render(sc,cam)};
+window.yaw=y=>{model.rotation.y=y;fx.render(sc,cam)};
+const ck=new THREE.Clock();(function loop(){requestAnimationFrame(loop);if(window.manual)return;const d=ck.getDelta();if(mixer)mixer.update(d);if(model&&q.has('spin'))model.rotation.y+=d*.6;fx.render(sc,cam)})();
+</script></body></html>

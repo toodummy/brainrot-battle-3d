@@ -632,11 +632,11 @@ function updateGame(rdt){musicTick();if(G.freeze>0){G.freeze-=rdt;updJuice(0,rdt
 
 // ---------- RENDER ----------
 let VIEW={s:1,cx:800,fy:0};
-function camera(){const p=G.p1,q=G.p2,portrait=H>W*1.1,fy=portrait?H*.62:H*.83,dist=Math.abs(p.x-q.x),hw=f=>f.F.h*.5*(f.vis||1)*(f.sc||1)+(portrait?40:60);
+function camera(){const p=G.p1,q=G.p2,portrait=H>W*1.1,fy=portrait?H*.62:H*.83,dist=Math.abs(p.x-q.x),hw=f=>f.F.h*.5*(f.vis||1)*(f.sc||1)+(portrait?14:60);
  let lo=Math.min(p.x-hw(p),q.x-hw(q)),hi=Math.max(p.x+hw(p),q.x+hw(q));for(const j of G.projs){if(j.x>-200&&j.x<1800){lo=Math.min(lo,j.x-(j.r||30)-20);hi=Math.max(hi,j.x+(j.r||30)+20)}}
  if(G.fin&&!G.fin.done){const F=G.fin;lo=Math.min(lo,F.a.x-hw(F.a),F.tx-hw(F.d)-60);hi=Math.max(hi,F.a.x+hw(F.a),F.tx+hw(F.d)+60)}
- lo=Math.max(lo,-300);hi=Math.min(hi,1900);const need=Math.min(portrait?2200:1900,hi-lo+(portrait?60:120)),mid=(lo+hi)/2,fin=G.fin&&!G.fin.done;
- const tw=portrait?clamp(Math.max(need,fin?finCamW():0),620,2200):(fin?Math.max(finCamW(),need):clamp(Math.max(dist+680,need),900,1600));
+ lo=Math.max(lo,-300);hi=Math.min(hi,1900);const need=Math.min(portrait?2200:1900,hi-lo+(portrait?24:120)),mid=(lo+hi)/2,fin=G.fin&&!G.fin.done;
+ const tw=portrait?clamp(Math.max(need,fin?finCamW():0),560,2200):(fin?Math.max(finCamW(),need):clamp(Math.max(dist+680,need),900,1600));
  G.cam.w=lerp(G.cam.w,tw,portrait?.16:.08);G.cam.x=lerp(G.cam.x,portrait?mid:fin?G.fin.zx:(p.x+q.x)/2,portrait?.2:.12);if(G.cam.w<need)G.cam.w=need;
  let s=Math.min(W/G.cam.w,(fy-40)/590),cx=G.cam.x;if(G.freeze>0&&G.superF&&!portrait&&W/(s*1.15)>=need){s*=1.15;cx=lerp(cx,G.superF.x,.6)}const vw=W/s;
  {cx=vw>=1600?800:clamp(cx,vw/2,1600-vw/2);if(vw>=hi-lo)cx=clamp(cx,hi-vw/2,lo+vw/2)}VIEW={s,cx,fy}}
