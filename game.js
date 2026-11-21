@@ -638,7 +638,7 @@ function camera(){const p=G.p1,q=G.p2,portrait=H>W*1.1,fy=portrait?H*.62:H*.83,d
  lo=Math.max(lo,-300);hi=Math.min(hi,1900);const need=Math.min(portrait?2200:1900,hi-lo+(portrait?24:120)),mid=(lo+hi)/2,fin=G.fin&&!G.fin.done;
  const tw=portrait?clamp(Math.max(need,fin?finCamW():0),560,2200):(fin?Math.max(finCamW(),need):clamp(Math.max(dist+680,need),900,1600));
  G.cam.w=lerp(G.cam.w,tw,portrait?.16:.08);G.cam.x=lerp(G.cam.x,portrait?mid:fin?G.fin.zx:(p.x+q.x)/2,portrait?.2:.12);if(G.cam.w<need)G.cam.w=need;
- let s=Math.min(W/G.cam.w,(fy-40)/590),cx=G.cam.x;if(G.freeze>0&&G.superF&&!portrait&&W/(s*1.15)>=need){s*=1.15;cx=lerp(cx,G.superF.x,.6)}const vw=W/s;
+ let s=Math.min(W/G.cam.w,(fy-40)/590),cx=G.cam.x;{const top=Math.max(p.y+p.F.h*(p.vis||1),q.y+q.F.h*(q.vis||1))+50;G.cam.top=lerp(G.cam.top||600,Math.max(600,top),.15);s=Math.min(s,(fy-(portrait?110:50))/G.cam.top)}if(G.freeze>0&&G.superF&&!portrait&&W/(s*1.15)>=need){s*=1.15;cx=lerp(cx,G.superF.x,.6)}const vw=W/s;
  {cx=vw>=1600?800:clamp(cx,vw/2,1600-vw/2);if(vw>=hi-lo)cx=clamp(cx,hi-vw/2,lo+vw/2)}VIEW={s,cx,fy}}
 function drawBG(c){const {s,cx,fy}=VIEW;c.fillStyle='#0d0020';c.fillRect(0,0,W,H);if(!BG)return;const px=800+(cx-800)*.85,bw=1600*s,bh=900*s,bx=W/2-px*s,by=fy-790*s;
  c.drawImage(BG,bx,by,bw,bh);if(by+bh<H){c.save();c.globalAlpha=.32;c.translate(0,2*(by+bh));c.scale(1,-1);c.drawImage(BG,bx,by,bw,bh);c.restore();const gg=c.createLinearGradient(0,by+bh,0,H);gg.addColorStop(0,'#0d002055');gg.addColorStop(1,'#0d0020');c.fillStyle=gg;c.fillRect(0,by+bh,W,H-by-bh)}if(bx>0||bx+bw<W){c.save();c.scale(-1,1);c.drawImage(BG,-bx,by,bw,bh);c.drawImage(BG,-(bx+2*bw),by,bw,bh);c.restore()}
