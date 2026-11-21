@@ -117,10 +117,8 @@ for s in (1,-1):
     pu=prim('sphere',seg=12,rings=6); pu.scale=(0.026,0.02,0.026); pu.location=loc+V_((-0.022*s,-0.045,-0.005)); activate(pu); bpy.ops.object.transform_apply(location=True,scale=True); set_mat(pu,M['pupil'])
     hl=prim('sphere',seg=8,rings=4); hl.scale=(0.011,0.008,0.011); hl.location=loc+V_((-0.035*s,-0.058,0.012)); activate(hl); bpy.ops.object.transform_apply(location=True,scale=True); set_mat(hl,M['eye'])
     # angry brow: thick bar slanted down toward center
-    br=meta([cap((0.05*s,-0.0,0.0),(0.26*s,0,0.07),0.05)],res=0.01); 
-    br.location=(0,loc.y-0.0,ez+0.07); activate(br); bpy.ops.object.transform_apply(location=True)
-    # push brow onto surface
-    bl,bn=ray_surface(brain,(0.15*s,-3,ez+0.09),(0,1,0)); br.location=(0,bl.y+0.02,0); activate(br); bpy.ops.object.transform_apply(location=True)
+    pa,na=ray_surface(brain,(0.04*s,-3,ez+0.075),(0,1,0)); pb,nb=ray_surface(brain,(0.27*s,-3,ez+0.15),(0,1,0)); pm,nm=ray_surface(brain,(0.155*s,-3,ez+0.12),(0,1,0))
+    br=meta([cap(pa+na*0.015,pm+nm*0.03,0.042),cap(pm+nm*0.03,pb+nb*0.015,0.036)],res=0.01)
     set_mat(br,M['face']); shade_smooth(br)
     eyes+= [e,ir,pu,hl,br]
 eyes=join(eyes,'Eyes'); shade_smooth(eyes)
@@ -149,7 +147,7 @@ for s in (1,-1):
     sp=[]
     for k in range(9):
         a=2*math.pi*k/9
-        c=prim('cone',seg=8,r1=0.04,r2=0.0,depth=0.12); c.location=(math.cos(a)*0.27,math.sin(a)*0.27,0); c.rotation_euler=(0,math.pi/2,a)
+        c=prim('cone',seg=8,r1=0.05,r2=0.0,depth=0.17); c.location=(math.cos(a)*0.31,math.sin(a)*0.31,0); c.rotation_euler=(0,math.pi/2,a)
         activate(c); bpy.ops.object.transform_apply(location=True,rotation=True); sp.append(c)
     b=join([t]+sp,'Band'); q=V_((0,0,1)).rotation_difference(ax); b.rotation_mode='QUATERNION'; b.rotation_quaternion=q; b.location=w1
     activate(b); bpy.ops.object.transform_apply(location=True,rotation=True); set_mat(b,M['gold']); shade_smooth(b); bands.append((s,b))
@@ -159,19 +157,29 @@ for s in (1,-1):
     for kk in (-1,0,1):
         n=prim('sphere',seg=10,rings=6); n.scale=(0.03,0.02,0.018); n.location=((0.33+0.065*kk)*s,-0.37,0.07); activate(n); bpy.ops.object.transform_apply(location=True,scale=True); set_mat(n,M['nail']); nails.append((s,n))
 # ---------------- slime drips (raycast onto brain / shoulders)
-def drip(surface,origin,direction,ln,r,name):
-    loc,nr=ray_surface(surface,origin,direction)
-    if loc is None: return None
-    a=loc+nr*0.01; b=a+V_((0,0,-ln))+nr*0.02
-    ob=meta([cap(a,b,r),ball(b,r*1.45),ell(a,(r*2.2,r*2.2,r*1.0))],res=0.012)
-    set_mat(ob,M['slime']); shade_smooth(ob); return ob
+def drip(surface,x,z,ln,r,center,front=True):
+    """slime drip that hugs the surface: chain of blobs raycast toward `center` while running downward"""
+    els=[]; pts=[]
+    n=max(3,int(ln/0.03))
+    for k in range(n+1):
+        zz=z-ln*k/n
+        rd=V_((x,-math.sqrt(max(0.004,0.33-x*x)),0)).normalized(); o=V_((center.x,center.y,zz))+rd*3
+        d=(V_((center.x,center.y,zz))-o).normalized()
+        loc,nr=ray_surface(surface,o,d)
+        if loc is None: break
+        pts.append((loc,nr))
+    if len(pts)<2: return None
+    for k,(loc,nr) in enumerate(pts):
+        rr=r*(1.25 if k==0 else 1.0-0.35*k/len(pts))
+        els.append(ball(loc+nr*rr*0.35,rr))
+    loc,nr=pts[-1]; els.append(ball(loc+nr*r*0.7,r*1.35))
+    ob=meta(els,res=0.01); set_mat(ob,M['slime']); shade_smooth(ob); return ob
 sl_head=[];sl_body=[]
-random.seed(11)
-for (x,z,ln) in [(0.42,1.70,0.18),(0.30,1.98,0.12),(-0.40,1.72,0.22),(-0.28,2.02,0.1),(0.48,1.86,0.14),(-0.50,1.90,0.16),(0.05,2.18,0.08)]:
-    d=drip(brain,(x*1.0,-3,z),(0,1,0),ln,0.028,'d')
+for (x,z,ln) in [(0.50,1.95,0.22),(-0.50,1.98,0.26),(0.54,1.80,0.16),(-0.53,1.78,0.14),(0.42,2.10,0.14),(-0.40,2.12,0.12)]:
+    d=drip(brain,x,z,ln,0.034,BC)
     if d: sl_head.append(d)
-for (x,y,ln,bone) in [(0.45,-0.1,0.25,'chest'),(-0.48,-0.05,0.3,'chest'),(0.62,-0.05,0.2,'upper_arm.L'),(-0.62,0.0,0.22,'upper_arm.R'),(0.15,-0.2,0.22,'chest'),(-0.2,-0.22,0.18,'spine')]:
-    d=drip(body,(x,y,3),(0,0,-1),ln,0.032,'d')
+for (x,z,ln,bone) in [(0.40,1.62,0.32,'chest'),(-0.42,1.62,0.36,'chest'),(0.30,1.40,0.18,'chest'),(-0.28,1.42,0.16,'chest'),(0.25,0.62,0.18,'thigh.L'),(-0.28,0.66,0.2,'thigh.R')]:
+    d=drip(body,x,z,ln,0.04,V_((x*0.3,0.05,0)))
     if d: sl_body.append((bone,d))
 # ---------------- rig
 J={'root':V_((0,0,0)),'hips':V_((0,0,0.86)),'spine':V_((0,0,1.10)),'chest':V_((0,0,1.38)),'neck':V_((0,0,1.62)),'head':V_((0,-0.02,1.72)),'head_top':V_((0,-0.02,2.35))}

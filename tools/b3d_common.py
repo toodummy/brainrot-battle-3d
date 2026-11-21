@@ -370,3 +370,11 @@ def shell(body, O, U, V, Dv, inside, ur, vr, res, off, thick, m, name='shell', s
     bv = ob.modifiers.new('bv', 'BEVEL'); bv.width = min(thick * 0.4, 0.01); bv.segments = 2
     apply_mods(ob); set_mat(ob, m); shade_smooth(ob)
     return ob
+
+def transfer_weights(src, dst):
+    for g in src.vertex_groups:
+        if g.name not in dst.vertex_groups: dst.vertex_groups.new(name=g.name)
+    m = dst.modifiers.new('dt', 'DATA_TRANSFER'); m.object = src
+    m.use_vert_data = True; m.data_types_verts = {'VGROUP_WEIGHTS'}; m.vert_mapping = 'POLYINTERP_NEAREST'
+    m.layers_vgroup_select_src = 'ALL'; m.layers_vgroup_select_dst = 'NAME'
+    activate(dst); bpy.ops.object.modifier_apply(modifier=m.name)

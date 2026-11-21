@@ -41,7 +41,6 @@ def is_belly(c,n):
     if n.y > -0.15: return False
     e=(c.x/0.33)**2+((c.z-1.14)/0.58)**2
     return e<1.0 and c.y<0.05
-paint_faces(body,M['belly'],is_belly)
 # ---------------- mouth (open grin)
 MW,MZ,MD=0.37,1.70,0.30
 def mouth_outline(n=40):
@@ -115,7 +114,7 @@ dorsal=fin([(0,0),(0.40,0),(0.42,0.07),(0.36,0.24),(0.32,0.40),(0.37,0.50),(0.22
 tailfin=fin([(0,0.0),(0.10,0.08),(0.30,0.36),(0.25,0.38),(0.08,0.14),(0.0,0.06),(0.10,-0.06),(0.24,-0.24),(0.20,-0.25),(0.06,-0.06)],0.065,(0,0.64,0.52),(-15,0,0),'TailFin')
 armfins=[]
 for s in (1,-1):
-    f=fin([(0,0),(0.18,0),(0.22,0.13),(0.13,0.07),(0.03,0.05)],0.04,(0,0,0),(0,0,0),'ArmFin')
+    f=fin([(0,0),(0.26,0),(0.32,0.20),(0.19,0.10),(0.04,0.07)],0.05,(0,0,0),(0,0,0),'ArmFin')
     # place on back of forearm, sweeping back
     f.rotation_euler=(rad(-55),0,rad(-30*s)); f.location=(0.74*s,0.06,0.92); activate(f); bpy.ops.object.transform_apply(location=True,rotation=True)
     armfins.append((s,f))
@@ -164,11 +163,17 @@ for s,S in ((1,'L'),(-1,'R')):
      'hip_'+S:V_((0.19*s,0,0.74)),'knee_'+S:V_((0.22*s,-0.03,0.44)),'ankle_'+S:V_((0.235*s,0,0.2)),'toe_'+S:V_((0.235*s,-0.30,0.06))})
 rig=build_rig(J,extra=[('tail1',(0,0.16,0.80),(0,0.46,0.62),'hips',False),('tail2',(0,0.46,0.62),(0,0.85,0.48),'tail1',True)])
 skin(body,rig)
+def belly_in(u,v):
+    if (u/0.33)**2+((v-1.06)/0.42)**2>=1: return False
+    t=max(-1,min(1,u/MW)); lip=MZ+0.06*t*t-MD*(1-t*t)**0.8-0.025
+    return v<lip
+belly=shell(body,(0,0,0),(1,0,0),(0,0,1),(0,1,0),belly_in,(-0.36,0.36),(0.6,1.5),0.008,0.003,0.012,M['belly'],'Belly',smooth_iter=1)
+transfer_weights(body,belly)
 def W(ob,b): rigid(ob,b)
 W(tongue,'head'); W(teeth,'head'); W(gl,'head'); W(gills,'neck'); W(dorsal,'chest'); W(tailfin,'tail2'); W(chain,'chest')
 for s,f in armfins: W(f,'forearm.'+('L' if s>0 else 'R'))
 for s,sh in shoes: W(sh,'foot.'+('L' if s>0 else 'R'))
-acc=[tongue,teeth,gl,gills,dorsal,tailfin,chain]+[f for _,f in armfins]+[sh for _,sh in shoes]
+acc=[belly,tongue,teeth,gl,gills,dorsal,tailfin,chain]+[f for _,f in armfins]+[sh for _,sh in shoes]
 for a in acc: a.parent=rig
 final=join([body]+acc,'Shark')
 print('TRIS',tri_count(final))

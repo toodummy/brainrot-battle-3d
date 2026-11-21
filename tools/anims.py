@@ -31,6 +31,8 @@ def tail(sw, lift=0):
     return {'tail1': ('e', (lift, 0, sw)), 'tail2': ('e', (lift * 0.6, 0, sw * 1.4))}
 
 def make_all(rig, style='shark', S=1.0):
+    global GUARD_L, GUARD_R
+    if style == 'boss': GUARD_L = (-0.10, -0.40, -0.16); GUARD_R = (0.08, -0.34, -0.22)
     A = Animator(rig, scale=S)
     has_tail = 'tail1' in A.bones
     T = (lambda sw, lift=0: tail(sw, lift)) if has_tail else (lambda sw, lift=0: {})
